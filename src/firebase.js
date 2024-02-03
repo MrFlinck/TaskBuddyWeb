@@ -3,7 +3,7 @@ import 'firebase/compat/auth'
 import 'firebase/compat/firestore'
 import { initializeApp } from "firebase/app";
 import {getFirestore} from 'firebase/firestore'; 
-import {getAuth, GoogleAuthProvider} from 'firebase/auth';
+import {getAuth, GoogleAuthProvider, signInWithPopup} from 'firebase/auth';
 import { initializeAuth } from 'firebase/auth';
 
 

@@ -7,38 +7,34 @@ import {
   TextInput,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { useState, useEffect, useContext } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { useState, useEffect } from "react";
 import { db, firebaseAuth } from "../src/firebase";
 import { provider } from "../src/firebase";
-import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signInWithCredential } from "firebase/auth";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { signInWithPopup } from "firebase/auth";
 import {
   addDoc,
   collection,
   getDocs,
   query,
 } from "firebase/firestore";
-import Cookies from "universal-cookie";
-//import 'react-native-gesture-handler';
-import * as Google from 'expo-auth-session/providers/google'
+
 import * as WebBrowser from 'expo-web-browser'
 import Loading from "./Loading";
 import firebase from "firebase/compat/app";
-import { AuthContext } from "../tokens/auth-context";
+import { GoogleAuthProvider } from "firebase/auth";
+
+
 WebBrowser.maybeCompleteAuthSession();
 const Screen1 = () =>  {
   const navigation = useNavigation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [token, setToken] = useState("");
-  const [userInfo, setUserInfo] = useState();
   const [loading, IsLoading] = useState(false);
+  const [varEmail, setVarEmail] = useState("");
   const [isAuthenticating, setIsAuthenticating] = useState(false)
-  const authCtx = useContext(AuthContext);
   const usersCollectionRef = collection(db, "users");
-  const cookies = new Cookies();
-  
+  const auth = firebaseAuth; 
+  const currentUser = auth.currentUser;
 
 
 useEffect(() => {
@@ -46,33 +42,25 @@ useEffect(() => {
         if (user) {
             navigation.navigate("usuario");
             console.log("Logged with: ", firebase.auth().currentUser.email);
+         
         } else {
         }
     });
 },[]);
 
-
-  
-
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId:'121072375342-820eal40g8j2cep42d0skkhq0eg3a21j.apps.googleusercontent.com',
-    webClientId:'121072375342-820eal40g8j2cep42d0skkhq0eg3a21j.apps.googleusercontent.com'
-  });
-
-
+ /// pelo visto, terei que incluir um novo auth com google, com o auth normal (senha e email)
   function press() {
       navigation.navigate("cadastro");
   }
   const login = async () => {
     setIsAuthenticating(true)
     IsLoading(true)
-    await firebase.auth().signInWithEmailAndPassword(email, password)
+    await firebase.auth().signInWithEmailAndPassword(email, password) 
           .then((userCredentials) => {
               const user = userCredentials.user;
               console.log("Logged with: ", user.email);
-              
-              //authCtx.authenticate()
-
+    
+        
             
               navigation.navigate("usuario");
               
@@ -93,6 +81,64 @@ useEffect(() => {
   if(loading == true){
     return <Loading/>
   }
+  const GoogleLogin = async (e) => {
+    const provider = await new GoogleAuthProvider();
+    const respond = await signInWithPopup(auth, provider)
+    console.log(auth.currentUser.email)
+    if(auth.currentUser.email){ /// adicionei o if para não ativar a função de criar um novo documento antes de fazer um login com google
+      await getDocs(query(usersCollectionRef))
+      .then(newdocsnap => {
+        let users = []; 
+        newdocsnap.forEach((doc) => {
+          users.push({...doc.data(), id:doc.id})
+        })
+        function escolhaNew(users, EmailAlvo){
+          for(let i = 0 ; i < users.length ; i++){
+            if(users[i].email === EmailAlvo){
+              return i; 
+            }
+          }
+  
+        }
+
+        const posicao = escolhaNew(users, auth.currentUser.email)
+        if(posicao === undefined){ // problema de login firestore com google resolvido !
+
+          addDoc(usersCollectionRef, { 
+            name: auth.currentUser.displayName, 
+            email: auth.currentUser.email, 
+            password: '',
+            photo: auth.currentUser.photoURL, 
+            age: '', 
+            expec: '', 
+           })
+
+          .then(userCredentials=>{
+            const userC = userCredentials.user;
+            console.log('Logged with: ', userC.email)
+            navigation.navigate('usuario'); 
+          })
+          .catch(error => {
+            console.log(error)
+          })
+          
+          
+        }
+
+        
+      })
+    }
+    // o programa precisa saber se fez cadastro primeiro. 
+  
+      
+        
+             
+  }
+
+     
+    
+     
+           
 
   return (
       <View style={styles.container}>
@@ -103,7 +149,7 @@ useEffect(() => {
           <TextInput value={password} onChangeText={(event) => setPassword(event)}
           placeholder="senha..." style={styles.input}/>
           <TouchableOpacity
-              onPress={() => promptAsync()}
+              onPress={() => GoogleLogin()}
              
               style={styles.btnGoogle}
           >

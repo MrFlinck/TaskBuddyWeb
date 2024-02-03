@@ -23,7 +23,8 @@ const Screen2 = () => {
   const [users, setUsers] = useState([]);
   const [email,setEmail] = useState('');
   const [newPhoto, setPhoto] = useState(''); 
-  const [password,setPassword] = useState(''); 
+  const [password,setPassword] = useState('');
+  const [passwordApproval, setPasswordApproval]  = useState(''); 
   const [loading, IsLoading] = useState(false);
   const usersCollectionRef = collection(db, "users");
   const validacao = '@gmail.com';
@@ -51,35 +52,42 @@ const Screen2 = () => {
         }
       }
       const Posicao = escollhaNew(users, email)
-      const Dados = users.length
+
       if(Posicao == undefined){
         if(terminaCom && email.length > 10){
-          if(password.length > 7){
-            addDoc(usersCollectionRef, { 
-              name: newName, 
-              email: email, 
-              password: password,
-              photo: newPhoto, 
-              age: '', 
-              expec: '', 
-             })
-            .then(() => firebase.auth().createUserWithEmailAndPassword(email,password))
-            .then(() => firebase.auth().signInWithEmailAndPassword(email,password)
-            .then(userCredentials=>{
-              const userC = userCredentials.user;
-              console.log('Logged with: ', userC.email)
-              navigation.navigate('usuario'); 
-            }))
-            .catch(error => {
-              console.log(error)
-            })
-            
-            
+          if(password === passwordApproval) {
+            if(password.length > 7){
+              addDoc(usersCollectionRef, { 
+                name: newName, 
+                email: email, 
+                password: password,
+                photo: newPhoto, 
+                age: '', 
+                expec: '', 
+               })
+              .then(() => firebase.auth().createUserWithEmailAndPassword(email,password))
+              .then(() => firebase.auth().signInWithEmailAndPassword(email,password)
+              .then(userCredentials=>{
+                const userC = userCredentials.user;
+                console.log('Logged with: ', userC.email)
+                navigation.navigate('usuario'); 
+              }))
+              .catch(error => {
+                console.log(error)
+              })
+              
+              
+            }
+            else{
+              console.log("A senha deve ter pelo menos 8 caracteres")
+            alert("A senha deve ter pelo menos 8 caracteres")
+            }
           }
           else{
-            console.log("A senha deve ter pelo menos 8 caracteres")
-          alert("A senha deve ter pelo menos 8 caracteres")
+            alert(" A senha está um pouco diferente...")
+            console.log("A senha está um pouco diferente...")
           }
+          
 
         }
         else{
@@ -101,16 +109,6 @@ const Screen2 = () => {
   if(loading == true){
     return <Loading/>
   }
-/*
-  useEffect(() => {
-    const getUsers = async () => {
-      const data = await getDocs(usersCollectionRef);
-      setUsers(data.docs.map((doc) => ({ ...doc.data(), id: doc.id })));
-    };
-
-    getUsers();
-  }, []);
-  */
 
   return (
 
@@ -133,6 +131,11 @@ const Screen2 = () => {
        value={password}
        placeholder="Senha..." onChangeText={(event) => 
         setPassword(event)}/>
+
+       <TextInput style={styles.input}
+       value={passwordApproval}
+       placeholder="Confirmar Senha..." onChangeText={(event) => 
+        setPasswordApproval(event)}/>
 
       <TouchableOpacity style={styles.botao} onPress={createUser}>
       <Text style={styles.btnTexto}>

@@ -27,7 +27,9 @@ import Loading from "./Loading";
 const Screen4 = () =>  {
 
   const navigation = useNavigation()
-  const auth = firebase.auth();
+  const auth = firebaseAuth;
+  const currentUser = auth.currentUser; 
+
 
   const storage = getStorage();
   const usersCollectionRef = collection(db,"users");
@@ -70,10 +72,11 @@ const Screen4 = () =>  {
     }))
 
   },[])
+
   
 
   useEffect(() => {
-    if(firebase.auth().currentUser){
+    if(currentUser){
       const scrib = onSnapshot(usersCollectionRef, (QuerySnapshot => {
         let newArray = []
         QuerySnapshot.forEach((doc) => {
@@ -86,7 +89,7 @@ const Screen4 = () =>  {
             }
           }
         }
-        const s = escolha(newArray, auth.currentUser.email)
+        const s = escolha(newArray, currentUser.email)
         const p = newArray[s].name
         const o = newArray[s].age
         const r = newArray[s].Desc
@@ -183,24 +186,34 @@ const Screen4 = () =>  {
       })
       IsLoading(false)
     }
+
     const handleImagePicker = async () => {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        aspect: [4, 4],
-        allowsEditing: true,
-        base64: true,
-        quality: 1,
-      });
-      
-   
-      
-  
-      if (!result.canceled) {
+
+   // aqui você edita a foto quando ela for adicionada, animal. 
+        const result = await ImagePicker.launchImageLibraryAsync({
+          aspect: [4, 4],
+          allowsEditing: true,
+          base64: true,
+          quality: 1,
+        });
         
-        setPhoto(result.base64)
-      }
-      else if(photo.length > 2){
-        setPhoto(require('../img/default.jpg'))
-      }
+     
+        
+    
+        if (!result.canceled) {
+          
+          setPhoto(result.base64)
+         
+        }
+        else if(photo.length > 2){
+          setPhoto(require('../img/default.jpg'))
+        }
+        else{
+          console.log('algo deu errado')
+        }
+
+  
+
       
     
     }
@@ -222,11 +235,27 @@ const Screen4 = () =>  {
         <TouchableOpacity onPress={handleImagePicker}>
 
         {photo ? (
-        <Image
-          source={{ uri: `data:image/jpeg;base64,${photo}` }}
-          style={styles.teste2}
-          resizeMode="cover"
-        />
+          
+            photo.startsWith("htt") ? (
+              <Image
+              source={{uri: morre[4]}}
+              style = {styles.teste2}
+              resizeMode="cover"
+              
+              />
+              
+
+
+            ):(
+              <Image
+               source={{ uri: `data:image/jpeg;base64,${photo}` }}
+               style={styles.teste2}
+               resizeMode="cover"
+              />
+
+            )
+          
+        
       ) : (
         <Image
           source={require('../img/default.jpg')}
